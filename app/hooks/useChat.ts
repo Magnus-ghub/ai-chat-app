@@ -10,15 +10,7 @@ export interface Message {
 }
 
 export function useChat() {
-  const [messages, setMessages] = useState<Message[]>(() => {
-    if (typeof window === "undefined") return [];
-    try {
-      const saved = localStorage.getItem("chat-messages");
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
+  const [messages, setMessages] = useState<Message[]>([]);
   const [streaming, setStreaming] = useState("");
   const [loading, setLoading] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
@@ -29,6 +21,12 @@ export function useChat() {
       if (saved) setMessages(JSON.parse(saved));
     } catch {}
   }, []);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("chat-messages", JSON.stringify(messages));
+    } catch {}
+  }, [messages]);
 
   const send = async (
     input: string,

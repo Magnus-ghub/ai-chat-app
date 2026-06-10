@@ -113,7 +113,11 @@ export default function ChatInput({ lang, loading, onSend, onStop, initialValue 
       </div>
 
       <p style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-muted)', marginTop: 8 }}>
-        {lang === 'en' ? 'Enter to send · Shift+Enter for new line' : 'Enter 전송 · Shift+Enter 줄바꿈'}
+        {lang === 'en'
+          ? 'Enter to send · Shift+Enter for new line'
+          : lang === 'uz'
+          ? "Yuborish: Enter · Yangi qator: Shift+Enter"
+          : 'Enter 전송 · Shift+Enter 줄바꿈'}
       </p>
     </footer>
   )

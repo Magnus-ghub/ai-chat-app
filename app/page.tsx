@@ -5,14 +5,16 @@ import { Lang } from "./lib/i18n";
 import { useChat } from "./hooks/useChat";
 import Header from "./components/Header";
 import SystemPrompt from "./components/SystemPrompt";
+import IELTSModeSelector, { IELTSMode, IELTS_MODES } from "./components/IELTSModeSelector";
 import MessageList from "./components/MessageList";
 import ChatInput from "./components/ChatInput";
 
 export default function ChatPage() {
-  const [lang, setLang] = useState<Lang>("en");
+  const [lang, setLang] = useState<Lang>("uz");
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [showSystem, setShowSystem] = useState(false);
-  const [systemPrompt, setSystemPrompt] = useState("");
+  const [systemPrompt, setSystemPrompt] = useState(IELTS_MODES.general.systemPrompt);
+  const [mode, setMode] = useState<IELTSMode>("general");
   const [hintValue, setHintValue] = useState("");
 
   const { messages, streaming, loading, send, stop, clear } = useChat();
@@ -20,6 +22,11 @@ export default function ChatPage() {
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
+
+  const handleModeChange = (newMode: IELTSMode, prompt: string) => {
+    setMode(newMode);
+    setSystemPrompt(prompt);
+  };
 
   const handleSend = (text: string, model: string) => {
     setHintValue("");
@@ -47,6 +54,8 @@ export default function ChatPage() {
         onSystemToggle={() => setShowSystem((p) => !p)}
         onClear={clear}
       />
+
+      <IELTSModeSelector mode={mode} lang={lang} onModeChange={handleModeChange} />
 
       {showSystem && (
         <SystemPrompt

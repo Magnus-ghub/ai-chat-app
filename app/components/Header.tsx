@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { i18n, Lang } from '../lib/i18n'
 import { Message } from '../hooks/useChat'
 
@@ -19,17 +20,22 @@ export default function Header({
   lang, theme, showSystem, hasMessages, messages,
   onLangChange, onThemeToggle, onSystemToggle, onClear,
 }: Props) {
+  const [mounted, setMounted] = useState(false)
   const t = i18n[lang]
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
 
   const exportTXT = () => {
     const content = messages.map(m =>
       `[${m.role.toUpperCase()}] ${new Date(m.timestamp).toLocaleTimeString()}\n${m.content}`
     ).join('\n\n---\n\n')
-    download('chat.txt', content, 'text/plain')
+    download('ielts-chat.txt', content, 'text/plain')
   }
 
   const exportJSON = () => {
-    download('chat.json', JSON.stringify(messages, null, 2), 'application/json')
+    download('ielts-chat.json', JSON.stringify(messages, null, 2), 'application/json')
   }
 
   const download = (filename: string, content: string, type: string) => {
@@ -64,8 +70,8 @@ export default function Header({
           width: 34, height: 34, borderRadius: 10,
           background: 'linear-gradient(135deg, #7c6aff, #a855f7)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: 14, fontWeight: 700, color: '#fff',
-        }}>AI</div>
+          fontSize: 11, fontWeight: 700, color: '#fff', letterSpacing: '-0.5px',
+        }}>IE</div>
         <div>
           <div style={{ fontSize: 15, fontWeight: 600 }}>{t.title}</div>
           <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>{t.subtitle}</div>
@@ -75,7 +81,7 @@ export default function Header({
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         {btn(onSystemToggle, showSystem, `⚙ ${t.system}`)}
 
-        {hasMessages && (
+        {mounted && hasMessages && (
           <>
             {btn(exportTXT, false, '↓ TXT')}
             {btn(exportJSON, false, '↓ JSON')}
@@ -92,7 +98,7 @@ export default function Header({
         </button>
 
         <div style={{ display: 'flex', border: '1px solid var(--border)', borderRadius: 8, overflow: 'hidden' }}>
-          {(['en', 'ko'] as Lang[]).map(l => (
+          {(['uz', 'en', 'ko'] as Lang[]).map(l => (
             <button key={l} onClick={() => onLangChange(l)} style={{
               padding: '5px 10px', fontSize: 12, border: 'none', cursor: 'pointer',
               background: lang === l ? 'var(--accent)' : 'transparent',
