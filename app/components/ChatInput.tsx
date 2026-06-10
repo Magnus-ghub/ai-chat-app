@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { i18n, Lang } from '../lib/i18n'
 
-export type Model = 'llama-3.1-8b-instant' | 'llama-3.3-70b-versatile' | 'mixtral-8x7b-32768'
+export type Model = 'gpt-4o-mini' | 'gpt-4o' | 'gpt-3.5-turbo'
 
 interface Props {
   lang: Lang
@@ -15,7 +15,7 @@ interface Props {
 
 export default function ChatInput({ lang, loading, onSend, onStop, initialValue = '' }: Props) {
   const [input, setInput] = useState(initialValue)
-  const [model, setModel] = useState<Model>('llama-3.1-8b-instant')
+  const [model, setModel] = useState<Model>('gpt-4o-mini')
   const textareaRef = useRef<HTMLTextAreaElement>(null)
   const t = i18n[lang]
 
@@ -54,7 +54,7 @@ export default function ChatInput({ lang, loading, onSend, onStop, initialValue 
     }}>
       {/* Model selector */}
       <div style={{ display: 'flex', gap: 6, marginBottom: 8 }}>
-        {(['llama-3.1-8b-instant', 'llama-3.3-70b-versatile', 'mixtral-8x7b-32768'] as Model[]).map(m => (
+        {(['gpt-4o-mini', 'gpt-4o', 'gpt-3.5-turbo'] as Model[]).map(m => (
           <button key={m} onClick={() => setModel(m)} style={{
             padding: '4px 10px', fontSize: 11, borderRadius: 6, cursor: 'pointer',
             background: model === m ? 'var(--accent-soft)' : 'transparent',
