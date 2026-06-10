@@ -20,7 +20,6 @@ export function useChat() {
   const [streaming, setStreaming] = useState('')
   const [loading, setLoading] = useState(false)
   const abortRef = useRef<AbortController | null>(null)
-  
 
   useEffect(() => {
     localStorage.setItem('chat-messages', JSON.stringify(messages))

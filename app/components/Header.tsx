@@ -1,12 +1,14 @@
 'use client'
 
 import { i18n, Lang } from '../lib/i18n'
+import { Message } from '../hooks/useChat'
 
 interface Props {
   lang: Lang
   theme: 'dark' | 'light'
   showSystem: boolean
   hasMessages: boolean
+  messages: Message[]
   onLangChange: (lang: Lang) => void
   onThemeToggle: () => void
   onSystemToggle: () => void
@@ -14,10 +16,31 @@ interface Props {
 }
 
 export default function Header({
-  lang, theme, showSystem, hasMessages,
+  lang, theme, showSystem, hasMessages, messages,
   onLangChange, onThemeToggle, onSystemToggle, onClear,
 }: Props) {
   const t = i18n[lang]
+
+  const exportTXT = () => {
+    const content = messages.map(m =>
+      `[${m.role.toUpperCase()}] ${new Date(m.timestamp).toLocaleTimeString()}\n${m.content}`
+    ).join('\n\n---\n\n')
+    download('chat.txt', content, 'text/plain')
+  }
+
+  const exportJSON = () => {
+    download('chat.json', JSON.stringify(messages, null, 2), 'application/json')
+  }
+
+  const download = (filename: string, content: string, type: string) => {
+    const blob = new Blob([content], { type })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = filename
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   const btn = (onClick: () => void, active: boolean, children: React.ReactNode) => (
     <button onClick={onClick} style={{
@@ -52,7 +75,13 @@ export default function Header({
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         {btn(onSystemToggle, showSystem, `⚙ ${t.system}`)}
 
-        {hasMessages && btn(onClear, false, t.clear)}
+        {hasMessages && (
+          <>
+            {btn(exportTXT, false, '↓ TXT')}
+            {btn(exportJSON, false, '↓ JSON')}
+            {btn(onClear, false, t.clear)}
+          </>
+        )}
 
         <button onClick={onThemeToggle} style={{
           padding: '5px 10px', fontSize: 14, borderRadius: 8, cursor: 'pointer',

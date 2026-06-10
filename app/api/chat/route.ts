@@ -1,41 +1,66 @@
 import { NextRequest } from 'next/server'
-import OpenAI from 'openai'
 
 export const runtime = 'edge'
 
 export async function POST(req: NextRequest) {
-  const { messages, systemPrompt } = await req.json()
+  const { messages, systemPrompt, model } = await req.json()
 
-  if (!process.env.OPENAI_API_KEY) {
+  if (!process.env.GROQ_API_KEY) {
     return new Response(
-      JSON.stringify({ error: 'OPENAI_API_KEY not configured' }),
+      JSON.stringify({ error: 'GROQ_API_KEY not configured' }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     )
   }
 
-  const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
-
-  const stream = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
-    stream: true,
-    max_tokens: 1000,
-    temperature: 0.7,
-    messages: [
-      {
-        role: 'system',
-        content: systemPrompt || 'You are a helpful AI assistant.',
-      },
-      ...messages,
-    ],
+  const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: model || 'llama-3.1-8b-instant',
+      stream: true,
+      max_tokens: 1000,
+      temperature: 0.7,
+      messages: [
+        {
+          role: 'system',
+          content: systemPrompt || 'You are a helpful AI assistant.',
+        },
+        ...messages,
+      ],
+    }),
   })
+
+  if (!res.ok) {
+    const err = await res.json()
+    return new Response(
+      JSON.stringify({ error: err.error?.message || 'Groq API error' }),
+      { status: 500, headers: { 'Content-Type': 'application/json' } }
+    )
+  }
 
   const encoder = new TextEncoder()
   const readable = new ReadableStream({
     async start(controller) {
-      for await (const chunk of stream) {
-        const text = chunk.choices[0]?.delta?.content || ''
-        if (text) {
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text })}\n\n`))
+      const reader = res.body!.getReader()
+      const decoder = new TextDecoder()
+
+      while (true) {
+        const { done, value } = await reader.read()
+        if (done) break
+        const lines = decoder.decode(value).split('\n')
+        for (const line of lines) {
+          if (!line.startsWith('data: ')) continue
+          const data = line.slice(6)
+          if (data === '[DONE]') continue
+          try {
+            const text = JSON.parse(data).choices[0]?.delta?.content || ''
+            if (text) {
+              controller.enqueue(encoder.encode(`data: ${JSON.stringify({ text })}\n\n`))
+            }
+          } catch {}
         }
       }
       controller.enqueue(encoder.encode('data: [DONE]\n\n'))

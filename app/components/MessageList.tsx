@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Message } from '../hooks/useChat'
 import { i18n, Lang } from '../lib/i18n'
 import MessageBubble from './MessageBubble'
@@ -16,14 +16,29 @@ interface Props {
 export default function MessageList({ messages, streaming, loading, lang, onHintClick }: Props) {
   const t = i18n[lang]
   const bottomRef = useRef<HTMLDivElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const [autoScroll, setAutoScroll] = useState(true)
   const isEmpty = messages.length === 0 && !streaming
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages, streaming])
+    if (autoScroll) {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }
+  }, [messages, streaming, autoScroll])
+
+  const onScroll = () => {
+    const el = containerRef.current
+    if (!el) return
+    const isAtBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 60
+    setAutoScroll(isAtBottom)
+  }
 
   return (
-    <main style={{ flex: 1, overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+    <main
+      ref={containerRef}
+      onScroll={onScroll}
+      style={{ flex: 1, overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 12, position: 'relative' }}
+    >
       {isEmpty ? (
         <div style={{
           flex: 1, display: 'flex', flexDirection: 'column',
@@ -95,6 +110,32 @@ export default function MessageList({ messages, streaming, loading, lang, onHint
           )}
         </>
       )}
+
+      {/* Auto-scroll toggle */}
+      {!autoScroll && !isEmpty && (
+        <button
+          onClick={() => {
+            setAutoScroll(true)
+            bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
+          }}
+          style={{
+            position: 'sticky',
+            bottom: 8,
+            alignSelf: 'center',
+            padding: '6px 14px',
+            fontSize: 12,
+            borderRadius: 20,
+            cursor: 'pointer',
+            background: 'var(--accent)',
+            border: 'none',
+            color: '#fff',
+            boxShadow: '0 2px 8px rgba(124,106,255,0.4)',
+          }}
+        >
+          ↓ {lang === 'en' ? 'Scroll to bottom' : '아래로 이동'}
+        </button>
+      )}
+
       <div ref={bottomRef} />
     </main>
   )
